@@ -218,16 +218,56 @@
                                 </button>
                                 <div class="relative">
                                     <input type="text" id="searchInput" placeholder="Cari..." class="border rounded py-2 px-4 pl-10 text-black">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="absolute left-3 top-3 text-gray-400" viewBox="0 0 16 16">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="absolute left-3 top-3 text-black" viewBox="0 0 16 16">
                                         <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
                                     </svg>
                                 </div>
-                                <button class="border rounded py-2 px-4 flex items-center text-black">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="mr-2" viewBox="0 0 16 16">
-                                        <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5v-2zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2h-11z"/>
-                                    </svg>
-                                    Filter
-                                </button>
+                                <div class="relative">
+                                    <button id="filterButton" class="border rounded py-2 px-4 flex items-center text-black">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="mr-2" viewBox="0 0 16 16">
+                                            <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5v-2zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2h-11z"/>
+                                        </svg>
+                                        Filter
+                                    </button>
+                                    
+                                    <!-- Dropdown Filter Menu -->
+                                    <div id="filterDropdown" class="absolute right-0 mt-2 w-64 bg-white rounded shadow-lg z-10 hidden text-black">
+                                        <div class="p-4">
+                                            <h4 class="font-semibold mb-2">Jenis Pengendara</h4>
+                                            <div class="space-y-2 mb-4">
+                                                <label class="flex items-center">
+                                                    <input type="checkbox" name="driverType" value="Pegawai" class="mr-2">
+                                                    Pegawai
+                                                </label>
+                                                <label class="flex items-center">
+                                                    <input type="checkbox" name="driverType" value="Magang/PKL" class="mr-2">
+                                                    Magang/PKL
+                                                </label>
+                                                <label class="flex items-center">
+                                                    <input type="checkbox" name="driverType" value="VIP/VVIP" class="mr-2">
+                                                    VIP/VVIP
+                                                </label>
+                                            </div>
+                                            
+                                            <h4 class="font-semibold mb-2">Status</h4>
+                                            <div class="space-y-2 mb-4">
+                                                <label class="flex items-center">
+                                                    <input type="checkbox" name="status" value="Active" class="mr-2">
+                                                    Active
+                                                </label>
+                                                <label class="flex items-center">
+                                                    <input type="checkbox" name="status" value="Deactive" class="mr-2">
+                                                    Deactive
+                                                </label>
+                                            </div>
+                                            
+                                            <div class="flex justify-between mt-4">
+                                                <button id="applyFilter" class="bg-red-600 text-white py-1 px-3 rounded text-sm">Apply</button>
+                                                <button id="resetFilter" class="border border-gray-300 py-1 px-3 rounded text-sm">Reset</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="mt-4">
@@ -272,7 +312,7 @@
                                             <tr class="border-b hover:bg-gray-50">
                                                 <td class="py-3 px-4">Dita</td>
                                                 <td class="py-3 px-4">dita@gmail.com</td>
-                                                <td class="py-3 px-4">Magang</td>
+                                                <td class="py-3 px-4">Magang/PKL</td>
                                                 <td class="py-3 px-4">(857)7534678</td>
                                                 <td class="py-3 px-4">
                                                     <span class="bg-green-100 text-green-600 py-1 px-3 rounded-full text-xs">Active</span>
@@ -489,6 +529,199 @@
                     searchInput.addEventListener('keyup', function() {
                         dataTable.search(this.value);
                     });
+                }
+            }
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Filter dropdown toggle
+            const filterButton = document.getElementById('filterButton');
+            const filterDropdown = document.getElementById('filterDropdown');
+            const applyFilterButton = document.getElementById('applyFilter');
+            const resetFilterButton = document.getElementById('resetFilter');
+            
+            // Toggle filter dropdown
+            if (filterButton && filterDropdown) {
+                filterButton.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    filterDropdown.classList.toggle('hidden');
+                });
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!filterDropdown.contains(e.target) && e.target !== filterButton) {
+                        filterDropdown.classList.add('hidden');
+                    }
+                });
+            }
+            
+            // Apply filter
+            if (applyFilterButton) {
+                applyFilterButton.addEventListener('click', function() {
+                    applyFilters();
+                    filterDropdown.classList.add('hidden');
+                });
+            }
+            
+            // Reset filter
+            if (resetFilterButton) {
+                resetFilterButton.addEventListener('click', function() {
+                    // Uncheck all checkboxes
+                    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                        checkbox.checked = false;
+                    });
+                    
+                    // Reset the table to show all rows
+                    const table = document.getElementById('datatablesSimple');
+                    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+                    
+                    for (let i = 0; i < rows.length; i++) {
+                        rows[i].style.display = "";
+                    }
+                    
+                    filterDropdown.classList.add('hidden');
+                });
+            }
+            
+            // Function to apply filters
+            function applyFilters() {
+                // Get selected driver types
+                const selectedDriverTypes = Array.from(document.querySelectorAll('input[name="driverType"]:checked')).map(cb => cb.value);
+                
+                // Get selected statuses
+                const selectedStatuses = Array.from(document.querySelectorAll('input[name="status"]:checked')).map(cb => cb.value);
+                
+                // Get table rows
+                const table = document.getElementById('datatablesSimple');
+                const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+                
+                // Check if any filters are selected
+                const noDriverTypeFilter = selectedDriverTypes.length === 0;
+                const noStatusFilter = selectedStatuses.length === 0;
+                
+                // Loop through all table rows and apply filters
+                for (let i = 0; i < rows.length; i++) {
+                    const cells = rows[i].getElementsByTagName('td');
+                    
+                    // Get driver type (column index 2) and status (column index 4)
+                    const driverType = cells[2].textContent.trim();
+                    const status = cells[4].textContent.trim();
+                    
+                    // Determine if the row matches the filters
+                    const driverTypeMatch = noDriverTypeFilter || selectedDriverTypes.some(type => driverType.includes(type));
+                    const statusMatch = noStatusFilter || selectedStatuses.some(s => status.includes(s));
+                    
+                    // Show/hide the row based on filter match
+                    if (driverTypeMatch && statusMatch) {
+                        rows[i].style.display = "";
+                    } else {
+                        rows[i].style.display = "none";
+                    }
+                }
+            }
+        });
+    </script>
+    <script>
+        window.addEventListener('DOMContentLoaded', event => {
+            // Simple-DataTables initialization
+            const datatablesSimple = document.getElementById('datatablesSimple');
+            let dataTable;
+            
+            if (datatablesSimple) {
+                dataTable = new simpleDatatables.DataTable(datatablesSimple, {
+                    perPage: 10,
+                    perPageSelect: [10, 20, 30, 50],
+                    searchable: true,
+                    sortable: true,
+                    fixedHeight: false,
+                    labels: {
+                        placeholder: "Search...",
+                        perPage: "entries per page",
+                        noRows: "No entries found",
+                        info: "Showing {start} to {end} of {rows} entries"
+                    }
+                });
+                
+                // Connect search input to DataTable
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) {
+                    searchInput.addEventListener('keyup', function() {
+                        dataTable.search(this.value);
+                    });
+                }
+                
+                // Filter dropdown toggle
+                const filterButton = document.getElementById('filterButton');
+                const filterDropdown = document.getElementById('filterDropdown');
+                const applyFilterButton = document.getElementById('applyFilter');
+                const resetFilterButton = document.getElementById('resetFilter');
+                
+                // Toggle filter dropdown
+                if (filterButton && filterDropdown) {
+                    filterButton.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        filterDropdown.classList.toggle('hidden');
+                    });
+                    
+                    // Close dropdown when clicking outside
+                    document.addEventListener('click', function(e) {
+                        if (!filterDropdown.contains(e.target) && e.target !== filterButton) {
+                            filterDropdown.classList.add('hidden');
+                        }
+                    });
+                }
+                
+                // Apply filter
+                if (applyFilterButton) {
+                    applyFilterButton.addEventListener('click', function() {
+                        applyFilters(dataTable);
+                        filterDropdown.classList.add('hidden');
+                    });
+                }
+                
+                // Reset filter
+                if (resetFilterButton) {
+                    resetFilterButton.addEventListener('click', function() {
+                        // Uncheck all checkboxes
+                        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                            checkbox.checked = false;
+                        });
+                        
+                        // Reset the table
+                        dataTable.searchData.filters = [];
+                        dataTable.search('');
+                        dataTable.update();
+                        
+                        filterDropdown.classList.add('hidden');
+                    });
+                }
+                
+                // Function to apply filters with simple-datatables
+                function applyFilters(dataTable) {
+                    // Get selected driver types
+                    const selectedDriverTypes = Array.from(document.querySelectorAll('input[name="driverType"]:checked')).map(cb => cb.value);
+                    
+                    // Get selected statuses
+                    const selectedStatuses = Array.from(document.querySelectorAll('input[name="status"]:checked')).map(cb => cb.value);
+                    
+                    // Custom filter function for simple-datatables
+                    dataTable.data.filter((row) => {
+                        const driverType = row.cells[2].data.trim();
+                        const status = row.cells[4].textContent.trim();
+                        
+                        // Check if any filters are selected
+                        const noDriverTypeFilter = selectedDriverTypes.length === 0;
+                        const noStatusFilter = selectedStatuses.length === 0;
+                        
+                        // Determine if the row matches the filters
+                        const driverTypeMatch = noDriverTypeFilter || selectedDriverTypes.some(type => driverType.includes(type));
+                        const statusMatch = noStatusFilter || selectedStatuses.some(s => status.includes(s));
+                        
+                        return driverTypeMatch && statusMatch;
+                    });
+                    
+                    dataTable.update();
                 }
             }
         });
