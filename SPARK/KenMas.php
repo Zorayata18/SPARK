@@ -14,8 +14,10 @@ $petugas_operator = $_SESSION['user']['id_operator'];
 // Ambil data lokasi parkir
 $lokasiQuery = mysqli_query($conn, "SELECT * FROM tb_tempat_parkir");
 
-// Tangani form submit
 if (isset($_POST["submit"])) {
+    // Atur timezone ke Asia/Jakarta agar jam lokal sesuai
+    date_default_timezone_set("Asia/Jakarta");
+
     // Ambil data dari form
     $kode_lahan = $_POST["kode_lokasi"];
     $jenis_pengendara = $_POST["jenis_pengendara"];
@@ -23,7 +25,7 @@ if (isset($_POST["submit"])) {
     $nomor_plat = $_POST["nomor_plat"];
     $status = "berlangsung";
     $tanggal = date("Y-m-d");
-    $jam_masuk = date("H:i:s");
+    $jam_masuk = date("H:i:s"); // waktu real saat submit
 
     // Ambil id_pengguna jika bukan VIP/VVIP
     $id_pengguna = ($jenis_pengendara != 'VIP/VVIP') ? $_POST["id_pengguna"] : NULL;
