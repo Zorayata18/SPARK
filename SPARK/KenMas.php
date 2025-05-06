@@ -1,3 +1,50 @@
+<?php
+session_start();
+require_once 'config.php'; // koneksi ke database
+
+// Cek apakah pengguna sudah login
+if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'operator') {
+    header("Location: login.php");
+    exit();
+}
+
+// Ambil ID operator dari session
+$petugas_operator = $_SESSION['user']['id_operator'];
+
+// Ambil data lokasi parkir
+$lokasiQuery = mysqli_query($conn, "SELECT * FROM tb_tempat_parkir");
+
+// Tangani form submit
+if (isset($_POST["submit"])) {
+    // Ambil data dari form
+    $kode_lahan = $_POST["kode_lokasi"];
+    $jenis_pengendara = $_POST["jenis_pengendara"];
+    $jenis_kendaraan = $_POST["jenis_kendaraan"];
+    $nomor_plat = $_POST["nomor_plat"];
+    $status = "berlangsung";
+    $tanggal = date("Y-m-d");
+    $jam_masuk = date("H:i:s");
+
+    // Ambil id_pengguna jika bukan VIP/VVIP
+    $id_pengguna = ($jenis_pengendara != 'VIP/VVIP') ? $_POST["id_pengguna"] : NULL;
+
+    // Query insert ke tb_riwayat_parkir
+    $query = "INSERT INTO tb_riwayat_parkir (
+                tanggal, id_pengguna, jenis_kendaraan, nomor_plat, jam_masuk, kode_lahan, petugas_operator, status
+              ) VALUES (
+                '$tanggal', " . ($id_pengguna ? "'$id_pengguna'" : "NULL") . ", '$jenis_kendaraan', '$nomor_plat', '$jam_masuk', '$kode_lahan', '$petugas_operator', '$status'
+              )";
+
+    $result = mysqli_query($conn, $query);
+
+    if ($result) {
+        echo "<script>alert('Data parkir berhasil disimpan.'); window.location='dashboard.php';</script>";
+    } else {
+        echo "Gagal menyimpan data: " . mysqli_error($conn);
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,10 +78,15 @@
                         </li>
                         <li>
                             <a href="#" class="hidden py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 md:block">
-                                <{User}></a>
+                            <?php 
+                            if (isset($_SESSION['user'])) {
+                                echo $_SESSION['user']['nama'];
+                            }
+                            ?>
+                            </a>
                         </li>
                         <li>
-                            <a href="index.php" style="background: #cc0000; color: white; padding: 0.5rem 1.5rem; border-radius: 5px; text-decoration: none;">Keluar</a>
+                            <a href="logout.php" style="background: #cc0000; color: white; padding: 0.5rem 1.5rem; border-radius: 5px; text-decoration: none;">Keluar</a>
                         </li>
                     </ul>
                 </div>
@@ -82,7 +134,7 @@
                             <p class="sidebartext font-medium sm:block"><a href="LapIn.php">Laporan Insiden</a></p>
                         </li>
                         <li>
-                            <button class="btn p-2 px-6 bg-red-600 rounded text-white mt-80 hover:border-4 hover:p-1 hover:px-5 hover:cursor-pointer block hover:border-red-600 hover:bg-white hover:text-red-600 transition duration-200 ease-in-out md:hidden">Keluar</button>
+                            <a href="logout.php" class="btn p-2 px-6 bg-red-600 rounded text-white mt-80 hover:border-4 hover:p-1 hover:px-5 hover:cursor-pointer block hover:border-red-600 hover:bg-white hover:text-red-600 transition duration-200 ease-in-out md:hidden">Keluar</a>
                         </li>
                     </ul>
                 </div>
@@ -93,25 +145,26 @@
                 <!-- Form Container -->
                 <div class="bg-gray-100 p-6 m rounded-lg shadow-md w-full max-w-9xl mx-auto mb-8">
                     <h2 class="text-lg font-bold mb-6">Input Data Parkir Kendaraan Masuk</h2>
-                    <form class="space-y-4">
+                    <form method="post" class="space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div class="space-y-2">
                                 <label class="text-sm text-gray-600 block font-bold">Lokasi Parkir</label>
-                                <select class="w-full p-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-gray-200 font-normal" id="lokasiParkir">
-                                    <option selected>--Pilih--</option>
-                                    <option>Depan Gedung STC</option>
-                                    <option>Belakang Gedung STC</option>
-                                    <option>Depan Gedung RnD</option>
-                                    <option>Belakang Gedung Sembrani</option>
+                                <select name="kode_lokasi" class="w-full p-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-gray-200 font-normal" id="lokasiParkir" required>
+                                    <option value="">--Pilih--</option>
+                                    <?php while ($lokasi = mysqli_fetch_assoc($lokasiQuery)) { ?>
+                                        <option value="<?= $lokasi['kode_lokasi']; ?>" <?= (isset($_POST['kode_lokasi']) && $_POST['kode_lokasi'] == $lokasi['kode_lokasi']) ? 'selected' : ''; ?>>
+                                            <?= $lokasi['nama_lokasi']; ?>
+                                        </option>
+                                    <?php } ?>
                                 </select>
                             </div>
                     
                             <div class="space-y-2">
                                 <label class="text-sm text-gray-600 block font-bold">Jenis Pengendara</label>
-                                <select class="w-full p-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-gray-200 font-normal" 
+                                <select name="jenis_pengendara" class="w-full p-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-gray-200 font-normal" 
                                         id="jenisPengendara" 
-                                        onchange="updateFields()">
-                                    <option selected>--Pilih--</option>
+                                        onchange="updateFields()" required>
+                                    <option value="">--Pilih--</option>
                                     <option>Pegawai</option>
                                     <option>Magang/PKL</option>
                                     <option>VIP/VVIP</option>
@@ -121,6 +174,7 @@
                             <div class="space-y-2" id="idContainer">
                                 <label class="text-sm text-gray-600 block font-bold" id="idLabel">ID Pegawai</label>
                                 <input type="text" 
+                                    name="id_pengguna"
                                     placeholder="ex: 14556" 
                                     class="w-full p-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-gray-200 font-normal" 
                                     id="idPegawai">
@@ -128,8 +182,8 @@
                     
                             <div class="space-y-2" id="jenisKendaraanContainer">
                                 <label class="text-sm text-gray-600 block font-bold">Jenis Kendaraan</label>
-                                <select class="w-full p-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-gray-200 font-normal" id="jenisKendaraan">
-                                    <option selected>--Pilih--</option>
+                                <select name="jenis_kendaraan" class="w-full p-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-gray-200 font-normal" id="jenisKendaraan" required>
+                                    <option value="">--Pilih--</option>
                                     <option>Mobil</option>
                                     <option>Motor</option>
                                 </select>
@@ -138,9 +192,10 @@
                             <div class="space-y-2 md:col-span-2">
                                 <label class="text-sm text-gray-600 block font-bold">Nomor Plat</label>
                                 <input type="text" 
+                                    name="nomor_plat"
                                     placeholder="ex: W1373DR" 
                                     class="w-full p-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-gray-200 font-normal" 
-                                    id="nomorPlat">
+                                    id="nomorPlat" required>
                             </div>
                         </div>
                     
@@ -151,7 +206,7 @@
                                     class="px-6 py-2.5 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-gray-200">
                                 Bersihkan
                             </button>
-                            <button type="submit" 
+                            <button type="submit" name="submit" 
                                     class="px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-300">
                                 Masukkan
                             </button>
@@ -160,7 +215,7 @@
                 </div>
             </div>
             <!-- Success Modal -->
-            <div id="successModal" class="fixed inset-0 hidden items-center justify-center z-50">
+            <div id="successModal" class="fixed inset-0 <?= isset($showSuccess) && $showSuccess ? 'flex' : 'hidden' ?> items-center justify-center z-50">
                 <div class="bg-white rounded-lg p-8 max-w-sm w-full mx-4 relative shadow-[0_0_10px_rgba(0,0,0,0.1)]">
                     <!-- Close button -->
                     <button onclick="closeModal()" class="absolute top-4 right-4">
@@ -209,34 +264,24 @@
             document.getElementById('idPegawai').value = '';
             document.getElementById('jenisKendaraan').selectedIndex = 0;
             document.getElementById('nomorPlat').value = '';
+            updateFields();
         }
     </script>
     <script>
-        const form = document.querySelector('form');
-        const modal = document.getElementById('successModal');
-    
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            showSuccessModal();
-        });
-    
-        function showSuccessModal() {
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
-    
         function closeModal() {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+            document.getElementById('successModal').classList.add('hidden');
+            document.getElementById('successModal').classList.remove('flex');
         }
     
         function openGate() {
             closeModal();
-            form.reset();
+            document.querySelector('form').reset();
+            updateFields();
+            window.location.href = 'KenMas.php'; // Refresh the page
         }
     
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) {
+        document.getElementById('successModal').addEventListener('click', function(e) {
+            if (e.target === this) {
                 closeModal();
             }
         });
@@ -253,30 +298,25 @@
                 idContainer.style.display = 'block';
                 idLabel.textContent = 'ID Pegawai';
                 idInput.placeholder = 'ex: 14556';
+                idInput.required = true;
                 jenisKendaraanContainer.classList.remove('md:col-span-2');
             } else if (jenisPengendara === 'Magang/PKL') {
                 idContainer.style.display = 'block';
                 idLabel.textContent = 'ID Magang';
                 idInput.placeholder = 'ex: M14556';
+                idInput.required = true;
                 jenisKendaraanContainer.classList.remove('md:col-span-2');
             } else if (jenisPengendara === 'VIP/VVIP') {
                 idContainer.style.display = 'none';
+                idInput.required = false;
                 jenisKendaraanContainer.classList.add('md:col-span-2');
             } else {
                 idContainer.style.display = 'block';
                 idLabel.textContent = 'ID Pegawai';
                 idInput.placeholder = 'ex: 14556';
+                idInput.required = true;
                 jenisKendaraanContainer.classList.remove('md:col-span-2');
             }
-        }
-        
-        function resetForm() {
-            document.getElementById('lokasiParkir').selectedIndex = 0;
-            document.getElementById('jenisPengendara').selectedIndex = 0;
-            document.getElementById('jenisKendaraan').selectedIndex = 0;
-            document.getElementById('idPegawai').value = '';
-            document.getElementById('nomorPlat').value = '';
-            updateFields();
         }
     </script>
 </body>
